@@ -73,6 +73,27 @@
           .replace(/"/g, "&quot;");
       }
 
+      function shortTitle(title) {
+        const text = String(title || "").trim();
+        const beforeDash = text.split(/\s+[—–]\s+/)[0].trim();
+        const beforeColon = beforeDash.split(/\s*:\s+/)[0].trim();
+        const short = beforeColon.length >= 8 ? beforeColon : beforeDash;
+        return short || text;
+      }
+
+      function shortTopics(post) {
+        const aliases = {
+          "artificial intelligence": "AI",
+          "generative ai": "GenAI",
+          "machine learning": "ML",
+          "data engineering": "Data Eng",
+          "data science": "DS",
+          "time series": "Time Series",
+        };
+        const tags = Blog.postTags(post).map((tag) => aliases[tag.toLowerCase()] || tag);
+        return tags.join(" · ") || "—";
+      }
+
       function percentPositive(likes, dislikes) {
         const total = likes + dislikes;
         if (!total) return "—";
@@ -118,34 +139,25 @@
           }
 
           table.innerHTML = `
-            <table class="stats-table">
-              <thead>
-                <tr>
-                  <th>Post</th>
-                  <th>Views</th>
-                  <th>Likes</th>
-                  <th>Dislikes</th>
-                  <th>Net</th>
-                  <th>Positive</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${rows
-                  .map(
-                    (row) => `
-                      <tr>
-                        <td><a href="./post.html?slug=${encodeURIComponent(row.slug)}">${escapeHtml(row.title)}</a></td>
-                        <td>${row.views}</td>
-                        <td>${row.likes}</td>
-                        <td>${row.dislikes}</td>
-                        <td>${row.net}</td>
-                        <td>${percentPositive(row.likes, row.dislikes)}</td>
-                      </tr>
-                    `
-                  )
-                  .join("")}
-              </tbody>
-            </table>
+            <div class="stats-list">
+              ${rows
+                .map(
+                  (row) => `
+                    <a class="stats-row" href="./post.html?slug=${encodeURIComponent(row.slug)}">
+                      <div class="stats-row-copy">
+                        <strong>${escapeHtml(shortTitle(row.title))}</strong>
+                        <span class="stats-topics">${escapeHtml(shortTopics(row))}</span>
+                      </div>
+                      <div class="stats-row-metrics">
+                        <span><b>${row.views}</b> views</span>
+                        <span><b>${row.likes}</b> likes</span>
+                        <span><b>${row.dislikes}</b> dislikes</span>
+                      </div>
+                    </a>
+                  `
+                )
+                .join("")}
+            </div>
             <p class="muted stats-note">
               Counts are shared across readers. Each browser can like or dislike a post once, and a view is counted once per browser.
             </p>
