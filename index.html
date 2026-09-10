@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Home</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="./index.html">
+          <strong data-blog-title>The Dev Journal</strong>
+          <span data-blog-tagline></span>
+        </a>
+        <nav class="nav" aria-label="Site">
+          <a href="./index.html" data-nav="home">Writing</a>
+          <a href="./about.html" data-nav="about">About</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <div class="wrap">
+        <section class="hero">
+          <h1>Public notes.</h1>
+          <p class="lede">
+            I publish here. You can read everything without an account.
+          </p>
+        </section>
+        <ol class="post-list" id="post-list"></ol>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap" data-blog-footer></div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="./config.js"></script>
+    <script src="./js/blog.js"></script>
+    <script>
+      Blog.applySiteChrome("home");
+
+      const list = document.getElementById("post-list");
+
+      Blog.loadPostIndex()
+        .then((posts) => {
+          if (!posts.length) {
+            list.innerHTML = "<li class='muted'>No posts yet.</li>";
+            return;
+          }
+
+          list.innerHTML = posts
+            .map(
+              (post) => `
+                <li>
+                  <a class="post-card" href="./post.html?slug=${encodeURIComponent(post.slug)}">
+                    <p class="post-meta">${Blog.formatDate(post.date)}</p>
+                    <h2>${post.title}</h2>
+                    <p>${post.summary}</p>
+                  </a>
+                </li>
+              `
+            )
+            .join("");
+        })
+        .catch((error) => {
+          list.innerHTML = `<li class="error">${error.message} Open this site through a local server or GitHub Pages, not as a raw file.</li>`;
+        });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Post</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="./index.html">
+          <strong data-blog-title>The Dev Journal</strong>
+          <span data-blog-tagline></span>
+        </a>
+        <nav class="nav" aria-label="Site">
+          <a href="./index.html" data-nav="home">Writing</a>
+          <a href="./about.html" data-nav="about">About</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <div class="wrap" id="post-root"></div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap" data-blog-footer></div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="./config.js"></script>
+    <script src="./js/blog.js"></script>
+    <script>
+      const root = document.getElementById("post-root");
+      const slug = new URLSearchParams(window.location.search).get("slug");
+
+      async function showPost() {
+        if (!slug) {
+          throw new Error("Missing post.");
+        }
+
+        const posts = await Blog.loadPostIndex();
+        const post = posts.find((item) => item.slug === slug);
+        if (!post) {
+          throw new Error("That post is not public.");
+        }
+
+        const response = await fetch(`./posts/${encodeURIComponent(post.slug)}.md`, {
+          cache: "no-store",
+        });
+        if (!response.ok) {
+          throw new Error("The post file could not be loaded.");
+        }
+
+        const markdown = await response.text();
+        document.title = post.title;
+        Blog.applySiteChrome("post");
+
+        root.innerHTML = `
+          <article class="post">
+            <p class="post-meta">${Blog.formatDate(post.date)}</p>
+            <h1 class="post-title">${post.title}</h1>
+            <div class="post-body">${Blog.renderMarkdown(markdown)}</div>
+          </article>
+        `;
+      }
+
+      showPost().catch((error) => {
+        Blog.applySiteChrome("post");
+        root.innerHTML = `<div class="error">${error.message}</div>`;
+      });
+    </script>
+  </body>
+</html>

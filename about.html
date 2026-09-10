@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>About</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="./index.html">
+          <strong data-blog-title>The Dev Journal</strong>
+          <span data-blog-tagline></span>
+        </a>
+        <nav class="nav" aria-label="Site">
+          <a href="./index.html" data-nav="home">Writing</a>
+          <a href="./about.html" data-nav="about">About</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <div class="wrap">
+        <section class="page-card">
+          <h1 class="page-title">About</h1>
+          <p>
+            This is a personal blog by <strong data-blog-author>Chamal</strong>.
+            I write the posts. Anyone can read them.
+          </p>
+          <p class="muted">
+            Change the name, title, and tagline in <code>config.js</code>.
+            Add new writing in the <code>posts</code> folder.
+          </p>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap" data-blog-footer></div>
+    </footer>
+
+    <script src="./config.js"></script>
+    <script src="./js/blog.js"></script>
+    <script>
+      Blog.applySiteChrome("about");
+    </script>
+  </body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Write</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="./index.html">
+          <strong data-blog-title>The Dev Journal</strong>
+          <span data-blog-tagline></span>
+        </a>
+        <nav class="nav" aria-label="Site">
+          <a href="./index.html" data-nav="home">Writing</a>
+          <a href="./about.html" data-nav="about">About</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <div class="wrap">
+        <section class="write-card">
+          <h1 class="page-title">Write a post</h1>
+          <p class="lede">
+            This page helps you draft. Publishing still happens when you add the
+            file to this project and put the site online. Readers cannot publish
+            from here.
+          </p>
+
+          <label for="title">Title</label>
+          <input id="title" type="text" placeholder="A short, clear title" />
+
+          <label for="date">Date</label>
+          <input id="date" type="date" />
+
+          <label for="summary">Summary</label>
+          <input id="summary" type="text" placeholder="One sentence for the homepage" />
+
+          <label for="body">Post</label>
+          <textarea id="body" placeholder="Write in Markdown."></textarea>
+
+          <div class="actions">
+            <button id="preview-btn" class="secondary" type="button">Preview</button>
+            <button id="download-btn" type="button">Download Markdown</button>
+          </div>
+
+          <p class="status" id="status"></p>
+          <pre class="status" id="index-snippet" hidden></pre>
+          <div class="preview post-body" id="preview"></div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap" data-blog-footer></div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="./config.js"></script>
+    <script src="./js/blog.js"></script>
+    <script>
+      Blog.applySiteChrome("write");
+
+      const titleInput = document.getElementById("title");
+      const dateInput = document.getElementById("date");
+      const summaryInput = document.getElementById("summary");
+      const bodyInput = document.getElementById("body");
+      const preview = document.getElementById("preview");
+      const status = document.getElementById("status");
+      const snippet = document.getElementById("index-snippet");
+
+      dateInput.value = new Date().toISOString().slice(0, 10);
+
+      function draft() {
+        const title = titleInput.value.trim();
+        const date = dateInput.value;
+        const summary = summaryInput.value.trim();
+        const body = bodyInput.value;
+        const slug = Blog.slugify(title);
+        return { title, date, summary, body, slug };
+      }
+
+      document.getElementById("preview-btn").addEventListener("click", () => {
+        const { title, body } = draft();
+        preview.innerHTML = `<h2>${title || "Untitled"}</h2>${Blog.renderMarkdown(body)}`;
+      });
+
+      document.getElementById("download-btn").addEventListener("click", () => {
+        const post = draft();
+        if (!post.title || !post.body.trim()) {
+          status.textContent = "Add a title and some writing first.";
+          snippet.hidden = true;
+          return;
+        }
+
+        const blob = new Blob([post.body.trim() + "\n"], { type: "text/markdown" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${post.slug}.md`;
+        link.click();
+        URL.revokeObjectURL(url);
+
+        snippet.hidden = false;
+        snippet.textContent = `{
+  "slug": "${post.slug}",
+  "title": ${JSON.stringify(post.title)},
+  "date": "${post.date}",
+  "summary": ${JSON.stringify(post.summary || post.title)}
+}`;
+        status.textContent =
+          "Saved a Markdown file. Put it in the posts folder, add the JSON below to posts/index.json, then publish the site.";
+      });
+    </script>
+  </body>
+</html>
