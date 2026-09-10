@@ -1,11 +1,11 @@
 [
   {
     "slug": "hello-from-the-desk",
-    "title": "Hello from the desk",
-    "date": "2026-09-10",
+    "title": "ARIMA Model Selection — ඔයාත් දැනගන්න ඕන සම්පූර්ණ Guide එක 🚀 Time Series · Python · Machine Learning",
+    "date": "2026-04-01",
     "summary": "This is the first public note on the blog: why it exists, and how new posts will show up here.",
-    "cover": "images/hello-from-the-desk.jpg",
-    "tags": ["Data Science", "Software"]
+    "cover": "images/time_series.png",
+    "tags": ["Time Series", "Python", "Machine Learning"]
   },
   {
     "slug": "how-this-blog-works",
