@@ -47,6 +47,7 @@ function postFromDoc(doc) {
     cover: data.cover || "",
     body: data.body || "",
     draft: Boolean(data.draft),
+    tags: Array.isArray(data.tags) ? data.tags : [],
     source: "cloud",
   };
 }
@@ -91,6 +92,7 @@ async function savePost(post) {
     summary: post.summary || post.title,
     cover: post.cover || "",
     body: post.body || "",
+    tags: Array.isArray(post.tags) ? post.tags : [],
     draft: Boolean(post.draft),
     authorEmail: user.email,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),

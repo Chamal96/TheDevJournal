@@ -157,6 +157,31 @@ function formatDate(value) {
   });
 }
 
+function topicList() {
+  const topics = blogConfig().topics;
+  if (Array.isArray(topics) && topics.length) return topics;
+  return [
+    "Artificial Intelligence",
+    "Machine Learning",
+    "AWS",
+    "Data Engineering",
+    "Data Science",
+    "Software",
+  ];
+}
+
+function postTags(post) {
+  return (Array.isArray(post && post.tags) ? post.tags : [])
+    .map((tag) => String(tag).trim())
+    .filter(Boolean);
+}
+
+function postMatchesTopic(post, topic) {
+  if (!topic || topic === "all") return true;
+  const wanted = String(topic).toLowerCase();
+  return postTags(post).some((tag) => tag.toLowerCase() === wanted);
+}
+
 async function loadFilePosts() {
   const response = await fetch("./posts/index.json", { cache: "no-store" });
   if (!response.ok) {
@@ -438,6 +463,9 @@ window.Blog = {
   loadPostBody,
   renderMarkdown,
   slugify,
+  topicList,
+  postTags,
+  postMatchesTopic,
   formatEngagementLine,
   loadEngagement,
   loadEngagementMap,

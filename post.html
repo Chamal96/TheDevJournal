@@ -74,6 +74,7 @@
             <div class="post-inner">
               <p class="post-meta" data-post-meta>${Blog.formatDate(post.date)}</p>
               <h1 class="post-title">${post.title}</h1>
+              <div class="tag-row">${Blog.postTags(post).map((tag) => `<span class="tag">${tag}</span>`).join("")}</div>
               <div class="post-body">${Blog.renderMarkdown(markdown)}</div>
               ${Blog.reactionBarMarkup()}
             </div>

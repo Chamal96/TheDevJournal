@@ -84,6 +84,11 @@
             <label for="cover">Cover image URL</label>
             <input id="cover" type="text" placeholder="https://… or leave blank" />
 
+            <fieldset class="topic-picks">
+              <legend>Topics</legend>
+              <div id="topic-picks" class="topic-picks-list"></div>
+            </fieldset>
+
             <label for="body">Post</label>
             <textarea id="body" placeholder="Paste or write in Markdown."></textarea>
 
@@ -123,12 +128,31 @@
       const dateInput = document.getElementById("date");
       const summaryInput = document.getElementById("summary");
       const coverInput = document.getElementById("cover");
+      const topicPicks = document.getElementById("topic-picks");
       const bodyInput = document.getElementById("body");
       const preview = document.getElementById("preview");
       const status = document.getElementById("status");
       const cloudPosts = document.getElementById("cloud-posts");
 
       dateInput.value = new Date().toISOString().slice(0, 10);
+
+      topicPicks.innerHTML = Blog.topicList()
+        .map((topic) => {
+          const id = `topic-${Blog.slugify(topic)}`;
+          return `<label class="topic-pick" for="${id}"><input id="${id}" type="checkbox" value="${topic}" /> ${topic}</label>`;
+        })
+        .join("");
+
+      function selectedTags() {
+        return [...topicPicks.querySelectorAll("input:checked")].map((input) => input.value);
+      }
+
+      function setSelectedTags(tags) {
+        const chosen = new Set((tags || []).map((tag) => String(tag).toLowerCase()));
+        topicPicks.querySelectorAll("input").forEach((input) => {
+          input.checked = chosen.has(input.value.toLowerCase());
+        });
+      }
 
       function draft(isDraft) {
         const title = titleInput.value.trim();
@@ -137,7 +161,8 @@
         const body = bodyInput.value;
         const slug = Blog.slugify(title);
         const cover = coverInput.value.trim();
-        return { title, date, summary, body, slug, cover, draft: Boolean(isDraft) };
+        const tags = selectedTags();
+        return { title, date, summary, body, slug, cover, tags, draft: Boolean(isDraft) };
       }
 
       function fillForm(post) {
@@ -146,6 +171,7 @@
         summaryInput.value = post.summary || "";
         coverInput.value = post.cover || "";
         bodyInput.value = post.body || "";
+        setSelectedTags(post.tags || []);
       }
 
       function clearForm() {

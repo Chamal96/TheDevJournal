@@ -35,8 +35,12 @@
     </header>
 
     <main>
-      <div class="wrap">
-        <ol class="post-list" id="post-list"></ol>
+      <div class="home-shell">
+        <aside class="topic-filter" aria-label="Topics">
+          <p class="filter-heading">Topics</p>
+          <div class="filter-list" id="topic-filters"></div>
+        </aside>
+        <ol class="post-grid" id="post-list"></ol>
       </div>
     </main>
 
@@ -55,43 +59,89 @@
       Blog.applySiteChrome("home");
 
       const list = document.getElementById("post-list");
+      const filters = document.getElementById("topic-filters");
+      let allPosts = [];
+      let activeTopic = "all";
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function renderFilters() {
+        const topics = Blog.topicList();
+        filters.innerHTML = ["All", ...topics]
+          .map((topic) => {
+            const value = topic === "All" ? "all" : topic;
+            const pressed = activeTopic.toLowerCase() === value.toLowerCase();
+            return `<button type="button" class="filter-btn" data-topic="${escapeHtml(value)}" aria-pressed="${pressed}">${escapeHtml(topic)}</button>`;
+          })
+          .join("");
+      }
+
+      function renderPosts(posts) {
+        if (!posts.length) {
+          list.innerHTML =
+            "<li class='muted empty-filter'>No posts in this topic yet.</li>";
+          return;
+        }
+
+        list.innerHTML = posts
+          .map((post) => {
+            const tags = Blog.postTags(post)
+              .map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`)
+              .join("");
+            return `
+              <li>
+                <a class="post-card" href="./post.html?slug=${encodeURIComponent(post.slug)}">
+                  ${Blog.coverMarkup(post, "post-card-cover")}
+                  <div class="post-card-body">
+                    <p class="post-meta">${Blog.formatDate(post.date)}</p>
+                    <h2>${escapeHtml(post.title)}</h2>
+                    <p class="post-card-summary">${escapeHtml(post.summary || "")}</p>
+                    <div class="tag-row">${tags}</div>
+                    <p class="post-engagement" data-engagement="${post.slug}">Loading reactions…</p>
+                  </div>
+                </a>
+              </li>
+            `;
+          })
+          .join("");
+      }
+
+      function showTopic(topic) {
+        activeTopic = topic;
+        renderFilters();
+        renderPosts(allPosts.filter((post) => Blog.postMatchesTopic(post, topic)));
+        const engagement = window.__postEngagement;
+        if (!engagement) return;
+        list.querySelectorAll("[data-engagement]").forEach((el) => {
+          el.textContent = Blog.formatEngagementLine(engagement[el.dataset.engagement]);
+        });
+      }
+
+      filters.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-topic]");
+        if (!button) return;
+        showTopic(button.getAttribute("data-topic"));
+      });
 
       Blog.loadPostIndex()
         .then((posts) => {
-          if (!posts.length) {
-            list.innerHTML = "<li class='muted'>No posts yet.</li>";
-            return;
-          }
+          allPosts = posts;
+          renderFilters();
+          renderPosts(posts);
+          if (!posts.length) return;
 
-          list.innerHTML = posts
-            .map(
-              (post) => `
-                <li>
-                  <a class="post-card" href="./post.html?slug=${encodeURIComponent(post.slug)}">
-                    ${Blog.coverMarkup(post, "post-card-cover")}
-                    <div class="post-card-body">
-                      <p class="post-meta">${Blog.formatDate(post.date)}</p>
-                      <h2>${post.title}</h2>
-                      <p>${post.summary}</p>
-                      <p class="post-engagement" data-engagement="${post.slug}">Loading reactions…</p>
-                    </div>
-                  </a>
-                </li>
-              `
-            )
-            .join("");
-
-          return Blog.loadEngagementMap(posts.map((post) => post.slug))
-            .then((engagement) => {
-              list.querySelectorAll("[data-engagement]").forEach((el) => {
-                el.textContent = Blog.formatEngagementLine(engagement[el.dataset.engagement]);
-              });
-            })
-            .catch(() => {
-              list.querySelectorAll("[data-engagement]").forEach((el) => {
-                el.textContent = "Reactions unavailable.";
-              });
+          return Blog.loadEngagementMap(posts.map((post) => post.slug)).then((engagement) => {
+            window.__postEngagement = engagement;
+            list.querySelectorAll("[data-engagement]").forEach((el) => {
+              el.textContent = Blog.formatEngagementLine(engagement[el.dataset.engagement]);
             });
+          });
         })
         .catch((error) => {
           list.innerHTML = `<li class="error">${error.message} Open this site through a local server or GitHub Pages, not as a raw file.</li>`;
