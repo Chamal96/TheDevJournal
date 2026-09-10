@@ -1,5 +1,12 @@
 const markedLib = window.marked;
 
+if (markedLib && typeof markedLib.setOptions === "function") {
+  markedLib.setOptions({
+    gfm: true,
+    breaks: false,
+  });
+}
+
 function blogConfig() {
   return window.BLOG || { title: "Blog", author: "Author", tagline: "" };
 }
@@ -234,6 +241,24 @@ function renderMarkdown(markdown) {
   return markedLib.parse(markdown);
 }
 
+function highlightCode(root) {
+  if (!root || !window.hljs) return;
+  root.querySelectorAll("pre code").forEach((block) => {
+    if (block.dataset.highlighted === "yes") return;
+    window.hljs.highlightElement(block);
+  });
+  root.querySelectorAll("pre").forEach((pre) => {
+    if (pre.querySelector(".code-lang")) return;
+    const code = pre.querySelector("code");
+    const langClass = code && [...code.classList].find((name) => name.startsWith("language-"));
+    if (!langClass) return;
+    const label = document.createElement("span");
+    label.className = "code-lang";
+    label.textContent = langClass.replace("language-", "");
+    pre.prepend(label);
+  });
+}
+
 function slugify(value) {
   return String(value)
     .toLowerCase()
@@ -462,6 +487,7 @@ window.Blog = {
   loadPostIndex,
   loadPostBody,
   renderMarkdown,
+  highlightCode,
   slugify,
   topicList,
   postTags,

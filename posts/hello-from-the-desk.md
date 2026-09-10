@@ -16,6 +16,7 @@ q — Moving Average terms: Previous forecast errors කීයක් use කර�
 2. Data Load කිරීම සහ Visualize කිරීම 📊
 First step: data load කරලා plot කරලා බලන්න. ඇස් දෙකෙන් data inspect කිරීම underrated step එකක් — but professionals මේක skip කරන්නේ නෑ.
 
+```python
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -25,7 +26,9 @@ data.set_index('Date', inplace=True)
 
 series = data['Sales']
 series.plot(figsize=(10,5))
-plt.show() 
+plt.show()
+```
+
 Plot කරලා බලද්දී trend ඇද්ද, seasonality ඇද්ද, sudden jumps ඇද්ද කියා notice කරගන්න. Trend ඇත්නම්, directly ARIMA apply කරන්න බෑ — ඒකට differencing කරන්න ඕන.
 
 3. Stationarity Check — ADF Test 🧪
@@ -33,11 +36,14 @@ ARIMA require කරන්නේ stationary data. Stationary data කියන�
 
 Stationary ද නෑද කියා test කරන්නට use කරන්නේ Augmented Dickey-Fuller (ADF) Test:
 
+```python
 from statsmodels.tsa.stattools import adfuller
 
 result = adfuller(series)
 print("ADF Statistic:", result[0])
-print("p-value:", result[1]) 
+print("p-value:", result[1])
+```
+
 Result interpret කරන්නේ simple විදිහට:
 
 p-value < 0.05 → Data stationary ✅
@@ -48,53 +54,73 @@ Example: p-value = 0.32 ආවා නම් — non-stationary. Next step: diffe
 4. Differencing — d value හොයාගන්නා හැටි
 Non-stationary නම් first difference apply කරන්න:
 
+```python
 series_diff = series.diff().dropna()
 
 result = adfuller(series_diff)
-print("p-value after differencing:", result[1]) 
+print("p-value after differencing:", result[1])
+```
+
 ඊට පස්සේ p-value 0.01 ආවා නම් — stationary! ඒ කියන්නේ d = 1. Still non-stationary නම් second differencing apply කරන්න (d = 2). Real world projects වල mostly d = 1 ම sufficient.
 
 5. ACF සහ PACF — p සහ q හොයාගන්නා හැටි 📈
 මේ step එක ගොඩක් important. PACF (Partial AutoCorrelation Function) use කරලා p find කරනවා. ACF (AutoCorrelation Function) use කරලා q find කරනවා.
 
+```python
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
 plot_pacf(series_diff)   # p හොයන්න
 plt.show()
 
 plot_acf(series_diff)    # q හොයන්න
-plt.show() 
+plt.show()
+```
+
 PACF graph එකේ lag 2 ට පස්සේ sharp cutoff ආවා නම් → p = 2. ACF graph එකේ lag 1 ට පස්සේ cutoff ආවා නම් → q = 1. ඒ කිවුවේ candidate model: ARIMA(2, 1, 1).
 
 6. Model Train කිරීම සහ AIC Compare කිරීම
 Model fit කරන්නට:
 
+```python
 from statsmodels.tsa.arima.model import ARIMA
 
 model = ARIMA(series, order=(2, 1, 1))
 model_fit = model.fit()
-print(model_fit.summary()) 
+print(model_fit.summary())
+```
+
 Summary output එකේ AIC (Akaike Information Criterion) value හොයාගන්න. Lower AIC = better model. Multiple models compare කරලා best AIC select කරන්න:
 
-Model AIC තීරණය ARIMA(1,1,1) 540 — ARIMA(2,1,1) 520 ✅ Best ARIMA(3,1,1) 525 —
+| Model | AIC | Note |
+| --- | --- | --- |
+| ARIMA(1,1,1) | 540 | — |
+| ARIMA(2,1,1) | 520 | Best |
+| ARIMA(3,1,1) | 525 | — |
 
 7. Auto ARIMA — Shortcut Method ⚡
 Manual search කරන්න time නෑ නම් — auto_arima use කරන්න. Automatically best (p, d, q) find කරනවා:
 
+```python
 from pmdarima import auto_arima
 
 model = auto_arima(series, seasonal=False, trace=True)
-print(model.summary()) 
+print(model.summary())
+```
+
 Production pipelines වල auto_arima ගොඩක් common. But interview වලදී manual process explain කරන්නත් ඕන — ඒ නිසා both know කරලා ඉන්න.
 
 8. Forecast කිරීම 🔮
+
+```python
 forecast = model_fit.forecast(steps=10)
 print(forecast)
 
 plt.plot(series, label='Actual')
 plt.plot(forecast, label='Forecast')
 plt.legend()
-plt.show() 
+plt.show()
+```
+
 Future values 10 ක් predict කරලා plot කිරීමෙන් visually validate කරගන්න පුළුවන්.
 
 9. ARIMA Fail වෙන හේතු — ඒ Alternatives 🔄

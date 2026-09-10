@@ -522,22 +522,63 @@ article.post {
 }
 
 .post-body pre {
+  position: relative;
   overflow: auto;
-  padding: 16px;
+  margin: 1.4em 0;
+  padding: 38px 16px 16px;
   background: var(--code);
   color: var(--code-ink);
   border-radius: 12px;
+  tab-size: 2;
 }
 
-.post-body code {
+.post-body :not(pre) > code {
   padding: 0.1em 0.35em;
   background: var(--paper-deep);
   border-radius: 6px;
+  font-size: 0.92em;
 }
 
-.post-body pre code {
+.post-body pre code,
+.post-body pre code.hljs {
+  display: block;
   padding: 0;
   background: transparent;
+  color: inherit;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.post-body table {
+  width: 100%;
+  margin: 1.2em 0;
+  border-collapse: collapse;
+  font-family: var(--sans);
+  font-size: 0.92rem;
+}
+
+.post-body th,
+.post-body td {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  text-align: left;
+}
+
+.post-body th {
+  background: var(--paper-deep);
+}
+
+.code-lang {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-family: var(--sans);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #cbbba8;
 }
 
 .page-card,
