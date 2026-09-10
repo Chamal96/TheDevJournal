@@ -3,16 +3,18 @@ window.BLOG = {
   author: "Chamal Jayasinghe",
   tagline:
     "A public journal by Chamal Jayasinghe on AI, machine learning, data engineering, and the systems behind them.",
-  footer: "The Dev Journal · written in public by Chamal Jayasinghe",
+  footer: "The Dev Journal Chamal Jayasinghe",
   reactionNamespace: "chamal96-thedevjournal",
   authorEmail: "chamaljayasinghe96@gmail.com",
   topics: [
     "Artificial Intelligence",
+    "Generative AI",
     "Machine Learning",
-    "AWS",
     "Data Engineering",
     "Data Science",
     "Software",
+    "Python",
+    "AWS",
   ],
   firebase: {
     apiKey: "",

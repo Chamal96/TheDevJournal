@@ -600,8 +600,11 @@ function coverUrl(cover) {
 
 function coverMarkup(post, className) {
   const src = coverUrl(post && post.cover);
-  if (!src) return "";
-  return `<img class="${className}" src="${src}" alt="" />`;
+  const image = src ? `<img class="${className}" src="${src}" alt="" />` : "";
+  if (className === "post-card-cover") {
+    return `<div class="post-card-cover-wrap">${image}</div>`;
+  }
+  return image;
 }
 
 window.Blog = {

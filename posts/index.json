@@ -1,5 +1,13 @@
 [
   {
+    "slug": "aws-ec2-instance-series",
+    "title": "AWS EC2 Instance Series: The Ultimate Guide — ඔයාගේ Workload එකට හරියන Instance Type එක කොහොමද හොයාගන්නේ?",
+    "date": "2026-05-11",
+    "summary": "T, M, C, R, P, G, and I-series explained — which EC2 family fits your workload, plus a Graviton CDK example and three cost rules.",
+    "cover": "images/aws-ec2-instance-series.png",
+    "tags": ["AWS", "Software"]
+  },
+  {
     "slug": "hello-from-the-desk",
     "title": "ARIMA Model Selection — ඔයාත් දැනගන්න ඕන සම්පූර්ණ Guide එක 🚀 Time Series · Python · Machine Learning",
     "date": "2026-04-01",
