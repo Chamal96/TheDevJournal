@@ -43,8 +43,12 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
     <script src="./config.js"></script>
     <script src="./js/blog.js"></script>
+    <script src="./js/publish.js"></script>
     <script>
       const root = document.getElementById("post-root");
       const slug = new URLSearchParams(window.location.search).get("slug");
@@ -60,14 +64,7 @@
           throw new Error("That post is not public.");
         }
 
-        const response = await fetch(`./posts/${encodeURIComponent(post.slug)}.md`, {
-          cache: "no-store",
-        });
-        if (!response.ok) {
-          throw new Error("The post file could not be loaded.");
-        }
-
-        const markdown = await response.text();
+        const markdown = await Blog.loadPostBody(post);
         document.title = post.title;
         Blog.applySiteChrome("post");
 

@@ -71,6 +71,7 @@ function applySiteChrome(currentPage) {
   const config = blogConfig();
   document.title = currentPage === "home" ? config.title : `${document.title} · ${config.title}`;
   mountThemeToggle();
+  mountWriteNav(currentPage);
 
   document.querySelectorAll("[data-blog-title]").forEach((el) => {
     el.textContent = config.title;
@@ -92,6 +93,19 @@ function applySiteChrome(currentPage) {
   });
 }
 
+function mountWriteNav(currentPage) {
+  const nav = document.querySelector("nav.nav");
+  if (!nav || nav.querySelector('[data-nav="write"]')) return;
+  const link = document.createElement("a");
+  link.href = "./write.html";
+  link.setAttribute("data-nav", "write");
+  link.textContent = "Write";
+  nav.appendChild(link);
+  if (currentPage === "write") {
+    link.setAttribute("aria-current", "page");
+  }
+}
+
 function formatDate(value) {
   const date = new Date(`${value}T00:00:00`);
   if (Number.isNaN(date.getTime())) return value;
@@ -102,15 +116,51 @@ function formatDate(value) {
   });
 }
 
-async function loadPostIndex() {
+async function loadFilePosts() {
   const response = await fetch("./posts/index.json", { cache: "no-store" });
   if (!response.ok) {
     throw new Error("Could not load the post list.");
   }
-  const posts = await response.json();
-  return posts
+  return response.json();
+}
+
+function mergePostLists(local, remote) {
+  const map = new Map();
+  local.forEach((post) => map.set(post.slug, post));
+  remote.forEach((post) => {
+    map.set(post.slug, { ...map.get(post.slug), ...post });
+  });
+  return [...map.values()]
     .filter((post) => !post.draft)
     .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+}
+
+async function loadPostIndex() {
+  const local = await loadFilePosts();
+  const remote =
+    window.BlogPublish && BlogPublish.loadRemotePosts
+      ? await BlogPublish.loadRemotePosts()
+      : [];
+  return mergePostLists(local, remote);
+}
+
+async function loadPostBody(post) {
+  if (post && String(post.body || "").trim()) return post.body;
+  if (post && post.source === "cloud") {
+    if (window.BlogPublish && BlogPublish.loadRemotePost) {
+      const full = await BlogPublish.loadRemotePost(post.slug);
+      if (full && full.body) return full.body;
+    }
+    throw new Error("The post file could not be loaded.");
+  }
+
+  const response = await fetch(`./posts/${encodeURIComponent(post.slug)}.md`, {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error("The post file could not be loaded.");
+  }
+  return response.text();
 }
 
 function renderMarkdown(markdown) {
@@ -344,6 +394,7 @@ window.Blog = {
   applySiteChrome,
   formatDate,
   loadPostIndex,
+  loadPostBody,
   renderMarkdown,
   slugify,
   formatEngagementLine,

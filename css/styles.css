@@ -516,6 +516,32 @@ html[data-theme="dark"] .theme-toggle .icon-moon {
   border-radius: 14px;
 }
 
+[hidden] {
+  display: none !important;
+}
+
+.setup-list {
+  margin: 12px 0 0;
+  padding-left: 1.2em;
+  font-family: var(--sans);
+}
+
+.cloud-posts {
+  margin: 20px 0 8px;
+  padding: 14px 16px;
+  background: var(--paper-deep);
+  border-radius: 12px;
+}
+
+.cloud-posts:empty {
+  display: none;
+}
+
+.cloud-posts ul {
+  margin: 8px 0 0;
+  padding-left: 1.2em;
+}
+
 .site-footer {
   padding: 24px 0 40px;
   color: var(--ink-soft);

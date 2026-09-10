@@ -1,0 +1,14 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthor() {
+      return request.auth != null
+        && request.auth.token.email == 'chamaljayasinghe96@gmail.com';
+    }
+
+    match /posts/{slug} {
+      allow read: if resource.data.draft == false || isAuthor();
+      allow create, update, delete: if isAuthor();
+    }
+  }
+}

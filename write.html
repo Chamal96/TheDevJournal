@@ -39,34 +39,63 @@
         <section class="write-card">
           <h1 class="page-title">Write a post</h1>
           <p class="lede">
-            This page helps you draft. Publishing still happens when you add the
-            file to this project and put the site online. Readers cannot publish
-            from here.
+            Sign in with <strong>chamaljayasinghe96@gmail.com</strong>. Paste a
+            post here and publish. Readers cannot write.
           </p>
 
-          <label for="title">Title</label>
-          <input id="title" type="text" placeholder="A short, clear title" />
-
-          <label for="date">Date</label>
-          <input id="date" type="date" />
-
-          <label for="summary">Summary</label>
-          <input id="summary" type="text" placeholder="One sentence for the homepage" />
-
-          <label for="cover">Cover image</label>
-          <input id="cover" type="text" placeholder="images/my-post.jpg" />
-
-          <label for="body">Post</label>
-          <textarea id="body" placeholder="Write in Markdown."></textarea>
-
-          <div class="actions">
-            <button id="preview-btn" class="secondary" type="button">Preview</button>
-            <button id="download-btn" type="button">Download Markdown</button>
+          <div id="setup-panel" class="error" hidden>
+            <p>
+              GitHub Pages cannot save files. One free Firebase project lets
+              this page publish without git.
+            </p>
+            <ol class="setup-list">
+              <li>Create a project at <a href="https://console.firebase.google.com/">Firebase Console</a>.</li>
+              <li>Enable <strong>Authentication → Google</strong>.</li>
+              <li>Create a <strong>Firestore</strong> database, then paste the rules from <code>firestore.rules</code>.</li>
+              <li>Authentication → Settings → Authorized domains: add <code>chamal96.github.io</code>.</li>
+              <li>Project settings → Your apps → Web app. Copy the keys into <code>config.js</code> under <code>firebase</code>.</li>
+            </ol>
           </div>
 
-          <p class="status" id="status"></p>
-          <pre class="status" id="index-snippet" hidden></pre>
-          <div class="preview post-body" id="preview"></div>
+          <div id="auth-panel" hidden>
+            <p class="status" id="auth-status"></p>
+            <div class="actions">
+              <button id="signin-btn" type="button">Sign in with Google</button>
+            </div>
+          </div>
+
+          <div id="editor" hidden>
+            <p class="status" id="signed-in"></p>
+            <div class="actions">
+              <button id="signout-btn" class="secondary" type="button">Sign out</button>
+              <button id="new-btn" class="secondary" type="button">New post</button>
+            </div>
+            <div id="cloud-posts" class="cloud-posts"></div>
+
+            <label for="title">Title</label>
+            <input id="title" type="text" placeholder="A short, clear title" />
+
+            <label for="date">Date</label>
+            <input id="date" type="date" />
+
+            <label for="summary">Summary</label>
+            <input id="summary" type="text" placeholder="One sentence for the homepage" />
+
+            <label for="cover">Cover image URL</label>
+            <input id="cover" type="text" placeholder="https://… or leave blank" />
+
+            <label for="body">Post</label>
+            <textarea id="body" placeholder="Paste or write in Markdown."></textarea>
+
+            <div class="actions">
+              <button id="preview-btn" class="secondary" type="button">Preview</button>
+              <button id="draft-btn" class="secondary" type="button">Save draft</button>
+              <button id="publish-btn" type="button">Publish</button>
+            </div>
+
+            <p class="status" id="status"></p>
+            <div class="preview post-body" id="preview"></div>
+          </div>
         </section>
       </div>
     </main>
@@ -76,11 +105,20 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
     <script src="./config.js"></script>
     <script src="./js/blog.js"></script>
+    <script src="./js/publish.js"></script>
     <script>
       Blog.applySiteChrome("write");
 
+      const setupPanel = document.getElementById("setup-panel");
+      const authPanel = document.getElementById("auth-panel");
+      const editor = document.getElementById("editor");
+      const authStatus = document.getElementById("auth-status");
+      const signedIn = document.getElementById("signed-in");
       const titleInput = document.getElementById("title");
       const dateInput = document.getElementById("date");
       const summaryInput = document.getElementById("summary");
@@ -88,52 +126,145 @@
       const bodyInput = document.getElementById("body");
       const preview = document.getElementById("preview");
       const status = document.getElementById("status");
-      const snippet = document.getElementById("index-snippet");
+      const cloudPosts = document.getElementById("cloud-posts");
 
       dateInput.value = new Date().toISOString().slice(0, 10);
 
-      function draft() {
+      function draft(isDraft) {
         const title = titleInput.value.trim();
         const date = dateInput.value;
         const summary = summaryInput.value.trim();
         const body = bodyInput.value;
         const slug = Blog.slugify(title);
-        const cover = coverInput.value.trim() || (slug ? `images/${slug}.jpg` : "");
-        return { title, date, summary, body, slug, cover };
+        const cover = coverInput.value.trim();
+        return { title, date, summary, body, slug, cover, draft: Boolean(isDraft) };
       }
 
-      document.getElementById("preview-btn").addEventListener("click", () => {
-        const { title, body } = draft();
-        preview.innerHTML = `<h2>${title || "Untitled"}</h2>${Blog.renderMarkdown(body)}`;
-      });
+      function fillForm(post) {
+        titleInput.value = post.title || "";
+        dateInput.value = post.date || new Date().toISOString().slice(0, 10);
+        summaryInput.value = post.summary || "";
+        coverInput.value = post.cover || "";
+        bodyInput.value = post.body || "";
+      }
 
-      document.getElementById("download-btn").addEventListener("click", () => {
-        const post = draft();
-        if (!post.title || !post.body.trim()) {
-          status.textContent = "Add a title and some writing first.";
-          snippet.hidden = true;
+      function clearForm() {
+        fillForm({ date: new Date().toISOString().slice(0, 10) });
+        preview.innerHTML = "";
+        status.textContent = "";
+        history.replaceState({}, "", "./write.html");
+      }
+
+      async function refreshCloudPosts() {
+        const posts = await BlogPublish.loadAuthorPosts();
+        if (!posts.length) {
+          cloudPosts.innerHTML = "";
           return;
         }
+        cloudPosts.innerHTML = `
+          <p class="muted">Your saved posts</p>
+          <ul>
+            ${posts
+              .map(
+                (post) => `
+                  <li>
+                    <a href="./write.html?slug=${encodeURIComponent(post.slug)}">${post.title}</a>
+                    ${post.draft ? "<span class='muted'>draft</span>" : ""}
+                  </li>
+                `
+              )
+              .join("")}
+          </ul>
+        `;
+      }
 
-        const blob = new Blob([post.body.trim() + "\n"], { type: "text/markdown" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `${post.slug}.md`;
-        link.click();
-        URL.revokeObjectURL(url);
+      async function loadSlug(slug) {
+        const post = await BlogPublish.loadRemotePost(slug);
+        if (!post) {
+          status.textContent = "That post was not found in the cloud.";
+          return;
+        }
+        fillForm(post);
+        status.textContent = post.draft ? "Loaded draft." : "Loaded published post.";
+      }
 
-        snippet.hidden = false;
-        snippet.textContent = `{
-  "slug": "${post.slug}",
-  "title": ${JSON.stringify(post.title)},
-  "date": "${post.date}",
-  "summary": ${JSON.stringify(post.summary || post.title)},
-  "cover": ${JSON.stringify(post.cover)}
-}`;
-        status.textContent =
-          "Saved a Markdown file. Put it in the posts folder, add the cover image under images/, add the JSON below to posts/index.json, then publish the site.";
+      function showSignedOut(message) {
+        editor.hidden = true;
+        authPanel.hidden = false;
+        authStatus.textContent = message || `Sign in as ${BlogPublish.authorEmail()}.`;
+      }
+
+      async function showSignedIn(user) {
+        authPanel.hidden = true;
+        editor.hidden = false;
+        signedIn.textContent = `Signed in as ${user.email}.`;
+        await refreshCloudPosts();
+        const slug = new URLSearchParams(window.location.search).get("slug");
+        if (slug) await loadSlug(slug);
+      }
+
+      if (!BlogPublish.isConfigured()) {
+        setupPanel.hidden = false;
+        authPanel.hidden = true;
+        editor.hidden = true;
+      } else {
+        setupPanel.hidden = true;
+        BlogPublish.onAuth((user, error) => {
+          if (error) {
+            showSignedOut(error.message);
+            return;
+          }
+          if (user) showSignedIn(user).catch((err) => {
+            status.textContent = err.message;
+          });
+          else showSignedOut();
+        });
+      }
+
+      document.getElementById("signin-btn").addEventListener("click", () => {
+        authStatus.textContent = "Opening Google…";
+        BlogPublish.signInWithGoogle().catch((error) => {
+          authStatus.textContent = error.message || "Sign-in failed.";
+        });
       });
+
+      document.getElementById("signout-btn").addEventListener("click", () => {
+        BlogPublish.signOut();
+      });
+
+      document.getElementById("new-btn").addEventListener("click", () => {
+        clearForm();
+      });
+
+      document.getElementById("preview-btn").addEventListener("click", () => {
+        const post = draft(false);
+        preview.innerHTML = `<h2>${post.title || "Untitled"}</h2>${Blog.renderMarkdown(post.body)}`;
+      });
+
+      async function save(isDraft) {
+        const post = draft(isDraft);
+        if (!post.title || !post.body.trim()) {
+          status.textContent = "Add a title and some writing first.";
+          return;
+        }
+        status.textContent = isDraft ? "Saving draft…" : "Publishing…";
+        try {
+          const slug = await BlogPublish.savePost(post);
+          await refreshCloudPosts();
+          if (isDraft) {
+            status.textContent = "Draft saved. It is not on the homepage yet.";
+            history.replaceState({}, "", `./write.html?slug=${encodeURIComponent(slug)}`);
+            return;
+          }
+          status.textContent = "Published. Opening the post…";
+          window.location.href = `./post.html?slug=${encodeURIComponent(slug)}`;
+        } catch (error) {
+          status.textContent = error.message || "Could not save that post.";
+        }
+      }
+
+      document.getElementById("draft-btn").addEventListener("click", () => save(true));
+      document.getElementById("publish-btn").addEventListener("click", () => save(false));
     </script>
   </body>
 </html>
