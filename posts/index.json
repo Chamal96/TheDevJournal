@@ -4,13 +4,13 @@
     "title": "Hello from the desk",
     "date": "2026-09-10",
     "summary": "This is the first public note on the blog: why it exists, and how new posts will show up here.",
-    "cover": "images/hello-from-the-desk.png"
+    "cover": "images/hello-from-the-desk.jpg"
   },
   {
     "slug": "how-this-blog-works",
     "title": "How this blog works",
     "date": "2026-09-10",
     "summary": "A short tour of writing a post, putting it online, and keeping the whole thing free.",
-    "cover": "images/how-this-blog-works.png"
+    "cover": "images/how-this-blog-works.jpg"
   }
 ]

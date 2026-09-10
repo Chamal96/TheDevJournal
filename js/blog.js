@@ -4,9 +4,73 @@ function blogConfig() {
   return window.BLOG || { title: "Blog", author: "Author", tagline: "" };
 }
 
+const THEME_KEY = "tdj-theme";
+
+function storedTheme() {
+  try {
+    const value = localStorage.getItem(THEME_KEY);
+    if (value === "light" || value === "dark") return value;
+  } catch (error) {
+    // Ignore private-mode storage failures.
+  }
+  return "";
+}
+
+function currentTheme() {
+  return (
+    storedTheme() ||
+    (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+  );
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  try {
+    localStorage.setItem(THEME_KEY, theme);
+  } catch (error) {
+    // Ignore private-mode storage failures.
+  }
+
+  const button = document.querySelector(".theme-toggle");
+  if (!button) return;
+  const next = theme === "dark" ? "light" : "dark";
+  button.setAttribute("aria-pressed", theme === "dark" ? "true" : "false");
+  button.setAttribute("aria-label", `Switch to ${next} mode`);
+  button.title = `Switch to ${next} mode`;
+}
+
+function mountThemeToggle() {
+  const wrap = document.querySelector(".site-header .wrap");
+  if (!wrap || wrap.querySelector(".theme-toggle")) return;
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "theme-toggle";
+  button.innerHTML = `
+    <svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M5 12H3M21 12h-2M6.2 6.2l1.4 1.4M16.4 16.4l1.4 1.4M6.2 17.8l1.4-1.4M16.4 7.6l1.4-1.4"></path></svg>
+    <svg class="icon-moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M21 14.5A8.5 8.5 0 1111.5 3 7 7 0 0021 14.5z"></path></svg>
+  `;
+  button.addEventListener("click", () => {
+    applyTheme(currentTheme() === "dark" ? "light" : "dark");
+  });
+
+  const brand = wrap.querySelector(".brand");
+  if (brand) {
+    const top = document.createElement("div");
+    top.className = "header-top";
+    brand.replaceWith(top);
+    top.append(brand, button);
+  } else {
+    wrap.prepend(button);
+  }
+
+  applyTheme(currentTheme());
+}
+
 function applySiteChrome(currentPage) {
   const config = blogConfig();
   document.title = currentPage === "home" ? config.title : `${document.title} · ${config.title}`;
+  mountThemeToggle();
 
   document.querySelectorAll("[data-blog-title]").forEach((el) => {
     el.textContent = config.title;
