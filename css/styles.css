@@ -99,14 +99,17 @@ a:hover {
 }
 
 .brand strong {
-  font-size: 1.55rem;
-  letter-spacing: -0.03em;
+  font-size: clamp(2.15rem, 6vw, 2.85rem);
+  line-height: 1.1;
+  letter-spacing: -0.04em;
 }
 
 .brand span {
+  max-width: 36em;
   color: var(--ink-soft);
   font-family: var(--sans);
-  font-size: 0.95rem;
+  font-size: 1.05rem;
+  line-height: 1.55;
 }
 
 .nav {
@@ -131,7 +134,6 @@ main {
   padding: 42px 0 72px;
 }
 
-.hero h1,
 .page-title,
 .post-title {
   margin: 0 0 12px;
@@ -146,8 +148,16 @@ main {
 }
 
 .lede {
-  margin: 0 0 36px;
+  margin: 0 0 24px;
   font-size: 1.15rem;
+}
+
+.page-card p {
+  margin: 0 0 1em;
+}
+
+.page-card p:last-child {
+  margin-bottom: 0;
 }
 
 .post-list {
