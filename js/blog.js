@@ -74,6 +74,39 @@ function mountThemeToggle() {
   applyTheme(currentTheme());
 }
 
+function authorPhotoUrl(config) {
+  const value = String(config.authorPhoto || "").trim();
+  if (!value || /^(javascript|data):/i.test(value)) return "";
+  if (/^https?:\/\//i.test(value)) return value;
+  return `./${value.replace(/^\.\/+/, "")}`;
+}
+
+function mountAuthorFooter(config) {
+  const name = config.author || "Author";
+  const headline =
+    config.authorHeadline || config.footer || `${config.title} · ${name}`;
+  const photo = authorPhotoUrl(config);
+  const linkedin = String(config.linkedin || "").trim();
+  const aboutHref = "./about.html";
+
+  document.querySelectorAll("[data-blog-footer]").forEach((el) => {
+    el.innerHTML = `
+      <div class="author-footer">
+        <div class="author-footer-rule" aria-hidden="true"></div>
+        ${
+          photo
+            ? `<a class="author-footer-photo-link" href="${linkedin || aboutHref}" ${linkedin ? 'rel="me"' : ""}>
+                <img class="author-footer-photo" src="${photo}" alt="${escapeHtml(name)}" width="96" height="96" />
+              </a>`
+            : ""
+        }
+        <a class="author-footer-name" href="${linkedin || aboutHref}" ${linkedin ? 'rel="me"' : ""}>${escapeHtml(name)}</a>
+        <p class="author-footer-role">${escapeHtml(headline)}</p>
+      </div>
+    `;
+  });
+}
+
 function applySiteChrome(currentPage) {
   const config = blogConfig();
   document.title = currentPage === "home" ? config.title : `${document.title} · ${config.title}`;
@@ -89,9 +122,7 @@ function applySiteChrome(currentPage) {
   document.querySelectorAll("[data-blog-author]").forEach((el) => {
     el.textContent = config.author;
   });
-  document.querySelectorAll("[data-blog-footer]").forEach((el) => {
-    el.textContent = config.footer || `${config.title} · ${config.author}`;
-  });
+  mountAuthorFooter(config);
 
   document.querySelectorAll("[data-nav]").forEach((link) => {
     if (link.getAttribute("data-nav") === currentPage) {
