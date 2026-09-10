@@ -17,6 +17,7 @@
         <nav class="nav" aria-label="Site">
           <a href="./index.html" data-nav="home">Writing</a>
           <a href="./about.html" data-nav="about">About</a>
+          <a href="./stats.html" data-nav="stats">Stats</a>
         </nav>
       </div>
     </header>
@@ -60,11 +61,19 @@
 
         root.innerHTML = `
           <article class="post">
-            <p class="post-meta">${Blog.formatDate(post.date)}</p>
+            <p class="post-meta" data-post-meta>${Blog.formatDate(post.date)}</p>
             <h1 class="post-title">${post.title}</h1>
             <div class="post-body">${Blog.renderMarkdown(markdown)}</div>
+            ${Blog.reactionBarMarkup()}
           </article>
         `;
+
+        const views = await Blog.recordView(post.slug);
+        const meta = root.querySelector("[data-post-meta]");
+        if (meta) {
+          meta.textContent = `${Blog.formatDate(post.date)} · ${views} ${views === 1 ? "view" : "views"}`;
+        }
+        await Blog.mountReactions(root.querySelector(".reaction-bar"), post.slug);
       }
 
       showPost().catch((error) => {

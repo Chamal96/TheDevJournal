@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stats</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="./index.html">
+          <strong data-blog-title>The Dev Journal</strong>
+          <span data-blog-tagline></span>
+        </a>
+        <nav class="nav" aria-label="Site">
+          <a href="./index.html" data-nav="home">Writing</a>
+          <a href="./about.html" data-nav="about">About</a>
+          <a href="./stats.html" data-nav="stats">Stats</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <div class="wrap">
+        <section class="page-card">
+          <h1 class="page-title">Engagement</h1>
+          <p class="lede">
+            Views, likes, and dislikes across every public post.
+          </p>
+          <div class="stat-grid" id="stat-summary">
+            <p class="muted">Loading counts…</p>
+          </div>
+          <div class="table-wrap" id="stat-table"></div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap" data-blog-footer></div>
+    </footer>
+
+    <script src="./config.js"></script>
+    <script src="./js/blog.js"></script>
+    <script>
+      Blog.applySiteChrome("stats");
+
+      const summary = document.getElementById("stat-summary");
+      const table = document.getElementById("stat-table");
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function percentPositive(likes, dislikes) {
+        const total = likes + dislikes;
+        if (!total) return "—";
+        return `${Math.round((likes / total) * 100)}%`;
+      }
+
+      Blog.loadPostIndex()
+        .then(async (posts) => {
+          const engagement = await Blog.loadEngagementMap(posts.map((post) => post.slug));
+          const rows = posts
+            .map((post) => {
+              const stats = engagement[post.slug] || { likes: 0, dislikes: 0, views: 0 };
+              return {
+                ...post,
+                ...stats,
+                reactions: stats.likes + stats.dislikes,
+                net: stats.likes - stats.dislikes,
+              };
+            })
+            .sort((a, b) => b.reactions - a.reactions || b.views - a.views);
+
+          const totals = rows.reduce(
+            (acc, row) => {
+              acc.views += row.views;
+              acc.likes += row.likes;
+              acc.dislikes += row.dislikes;
+              acc.reactions += row.reactions;
+              return acc;
+            },
+            { views: 0, likes: 0, dislikes: 0, reactions: 0 }
+          );
+
+          summary.innerHTML = `
+            <div class="stat-card"><span>Views</span><strong>${totals.views}</strong></div>
+            <div class="stat-card"><span>Likes</span><strong>${totals.likes}</strong></div>
+            <div class="stat-card"><span>Dislikes</span><strong>${totals.dislikes}</strong></div>
+            <div class="stat-card"><span>Positive</span><strong>${percentPositive(totals.likes, totals.dislikes)}</strong></div>
+          `;
+
+          if (!rows.length) {
+            table.innerHTML = "<p class='muted'>No posts yet.</p>";
+            return;
+          }
+
+          table.innerHTML = `
+            <table class="stats-table">
+              <thead>
+                <tr>
+                  <th>Post</th>
+                  <th>Views</th>
+                  <th>Likes</th>
+                  <th>Dislikes</th>
+                  <th>Net</th>
+                  <th>Positive</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows
+                  .map(
+                    (row) => `
+                      <tr>
+                        <td><a href="./post.html?slug=${encodeURIComponent(row.slug)}">${escapeHtml(row.title)}</a></td>
+                        <td>${row.views}</td>
+                        <td>${row.likes}</td>
+                        <td>${row.dislikes}</td>
+                        <td>${row.net}</td>
+                        <td>${percentPositive(row.likes, row.dislikes)}</td>
+                      </tr>
+                    `
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+            <p class="muted stats-note">
+              Counts are shared across readers. Each browser can like or dislike a post once, and a view is counted once per browser.
+            </p>
+          `;
+        })
+        .catch((error) => {
+          summary.innerHTML = `<p class="error">${error.message} Open this site through a local server or GitHub Pages, not as a raw file.</p>`;
+        });
+    </script>
+  </body>
+</html>

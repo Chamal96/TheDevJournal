@@ -17,6 +17,7 @@
         <nav class="nav" aria-label="Site">
           <a href="./index.html" data-nav="home">Writing</a>
           <a href="./about.html" data-nav="about">About</a>
+          <a href="./stats.html" data-nav="stats">Stats</a>
         </nav>
       </div>
     </header>
@@ -60,11 +61,24 @@
                     <p class="post-meta">${Blog.formatDate(post.date)}</p>
                     <h2>${post.title}</h2>
                     <p>${post.summary}</p>
+                    <p class="post-engagement" data-engagement="${post.slug}">Loading reactions…</p>
                   </a>
                 </li>
               `
             )
             .join("");
+
+          return Blog.loadEngagementMap(posts.map((post) => post.slug))
+            .then((engagement) => {
+              list.querySelectorAll("[data-engagement]").forEach((el) => {
+                el.textContent = Blog.formatEngagementLine(engagement[el.dataset.engagement]);
+              });
+            })
+            .catch(() => {
+              list.querySelectorAll("[data-engagement]").forEach((el) => {
+                el.textContent = "Reactions unavailable.";
+              });
+            });
         })
         .catch((error) => {
           list.innerHTML = `<li class="error">${error.message} Open this site through a local server or GitHub Pages, not as a raw file.</li>`;

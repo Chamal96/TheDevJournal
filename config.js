@@ -3,4 +3,5 @@ window.BLOG = {
   author: "Chamal",
   tagline: "Notes on AI, machine learning, data science, software, and the work behind them.",
   footer: "The Dev Journal · written in public.",
+  reactionNamespace: "chamal96-thedevjournal",
 };
