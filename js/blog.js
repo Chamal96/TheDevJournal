@@ -238,23 +238,146 @@ async function loadPostBody(post) {
 
 function renderMarkdown(markdown) {
   if (!markedLib) return markdown;
-  return markedLib.parse(markdown);
+  if (typeof markedLib.parse === "function") return markedLib.parse(markdown);
+  if (typeof markedLib === "function") return markedLib(markdown);
+  return markdown;
+}
+
+const LANG_ALIASES = {
+  py: "python",
+  js: "javascript",
+  ts: "typescript",
+  sh: "bash",
+  shell: "bash",
+  yml: "yaml",
+};
+
+const LANG_KEYWORDS = {
+  python:
+    "and as assert async await break class continue def del elif else except False finally for from global if import in is lambda None nonlocal not or pass raise return True try while with yield",
+  javascript:
+    "async await break case catch class const continue debugger default delete do else export extends false finally for function if import in instanceof let new null of return static super switch this throw true try typeof var void while yield",
+  typescript:
+    "as async await break case catch class const continue debugger default delete do else enum export extends false finally for from function if import in infer instanceof interface let new null of return static super switch this throw true try type typeof var void while yield",
+  sql: "add and alter as asc by case create delete desc distinct drop else end exists from group having in inner insert into is join left like limit not null on or order outer right select set table then union update values when where",
+  bash: "alias break case do done elif else esac export fi for function if in return then until while",
+};
+
+const PYTHON_BUILTINS =
+  "abs dict enumerate float int len list max min open print range set str sum tuple type zip";
+
+function languageFromClass(block) {
+  const langClass = [...block.classList].find((name) => name.startsWith("language-"));
+  return langClass ? langClass.replace("language-", "").toLowerCase() : "";
+}
+
+function normalizeLang(lang) {
+  const key = String(lang || "").toLowerCase();
+  return LANG_ALIASES[key] || key;
+}
+
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function tokenSpan(type, text) {
+  return `<span class="hljs-${type}">${escapeHtml(text)}</span>`;
+}
+
+function highlightFallback(source, lang) {
+  const holes = [];
+  const plug = (html) => {
+    const token = `__HLJS_HOLE_${holes.length}__`;
+    holes.push(html);
+    return token;
+  };
+
+  let text = String(source);
+  lang = normalizeLang(lang);
+
+  if (lang === "python") {
+    text = text.replace(/('''[\s\S]*?'''|"""[\s\S]*?""")/g, (match) => plug(tokenSpan("string", match)));
+    text = text.replace(/#.*$/gm, (match) => plug(tokenSpan("comment", match)));
+  } else if (lang === "sql") {
+    text = text.replace(/\/\*[\s\S]*?\*\//g, (match) => plug(tokenSpan("comment", match)));
+    text = text.replace(/--.*$/gm, (match) => plug(tokenSpan("comment", match)));
+  } else {
+    text = text.replace(/\/\*[\s\S]*?\*\//g, (match) => plug(tokenSpan("comment", match)));
+    text = text.replace(/\/\/.*$/gm, (match) => plug(tokenSpan("comment", match)));
+    if (lang === "bash" || !lang) {
+      text = text.replace(/(^|[\s])(#.*)$/gm, (_, lead, comment) => lead + plug(tokenSpan("comment", comment)));
+    }
+  }
+
+  text = text.replace(/'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"/g, (match) => plug(tokenSpan("string", match)));
+  text = text.replace(
+    /\b0x[0-9a-fA-F]+\b|\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b/g,
+    (match) => plug(tokenSpan("number", match))
+  );
+
+  if (lang === "python") {
+    text = text.replace(/\b(def|class)\s+([A-Za-z_]\w*)/g, (_, keyword, name) => {
+      return `${keyword} ${plug(tokenSpan("title", name))}`;
+    });
+  }
+
+  const keywords = LANG_KEYWORDS[lang];
+  if (keywords) {
+    const pattern = new RegExp(`\\b(?:${keywords.trim().split(/\s+/).join("|")})\\b`, "g");
+    text = text.replace(pattern, (match) => plug(tokenSpan("keyword", match)));
+  }
+
+  if (lang === "python") {
+    const builtins = new RegExp(`\\b(?:${PYTHON_BUILTINS.split(/\s+/).join("|")})\\b`, "g");
+    text = text.replace(builtins, (match) => plug(tokenSpan("built_in", match)));
+  }
+
+  return escapeHtml(text).replace(/__HLJS_HOLE_(\d+)__/g, (_, index) => holes[Number(index)]);
+}
+
+function highlightWithLibrary(source, lang) {
+  const hljs = window.hljs;
+  if (!hljs) return "";
+  const language = normalizeLang(lang);
+  try {
+    let value = "";
+    if (language && typeof hljs.getLanguage === "function" && hljs.getLanguage(language)) {
+      value = hljs.highlight(source, { language, ignoreIllegals: true }).value;
+    } else if (typeof hljs.highlightAuto === "function") {
+      value = hljs.highlightAuto(source).value;
+    }
+    if (value && value.includes("hljs-")) return value;
+  } catch (error) {
+    console.warn("Could not highlight a code block.", error);
+  }
+  return "";
 }
 
 function highlightCode(root) {
-  if (!root || !window.hljs) return;
+  if (!root) return;
+
   root.querySelectorAll("pre code").forEach((block) => {
     if (block.dataset.highlighted === "yes") return;
-    window.hljs.highlightElement(block);
+    const source = block.textContent;
+    const lang = languageFromClass(block);
+    const html = highlightWithLibrary(source, lang) || highlightFallback(source, lang);
+    block.innerHTML = html;
+    block.classList.add("hljs");
+    if (lang) block.classList.add(`language-${normalizeLang(lang)}`);
+    block.dataset.highlighted = "yes";
   });
+
   root.querySelectorAll("pre").forEach((pre) => {
     if (pre.querySelector(".code-lang")) return;
     const code = pre.querySelector("code");
-    const langClass = code && [...code.classList].find((name) => name.startsWith("language-"));
-    if (!langClass) return;
+    const lang = code && languageFromClass(code);
+    if (!lang) return;
     const label = document.createElement("span");
     label.className = "code-lang";
-    label.textContent = langClass.replace("language-", "");
+    label.textContent = normalizeLang(lang);
     pre.prepend(label);
   });
 }

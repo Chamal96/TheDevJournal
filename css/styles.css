@@ -544,11 +544,53 @@ article.post {
   display: block;
   padding: 0;
   background: transparent;
-  color: inherit;
+  color: #f6efe4;
   font-size: 0.88rem;
   line-height: 1.55;
   overflow-x: auto;
   white-space: pre;
+}
+
+.post-body pre code .hljs-comment,
+.post-body pre code .hljs-quote {
+  color: #9b8f82;
+  font-style: italic;
+}
+
+.post-body pre code .hljs-keyword,
+.post-body pre code .hljs-selector-tag,
+.post-body pre code .hljs-built_in,
+.post-body pre code .hljs-type {
+  color: #f0a39a;
+}
+
+.post-body pre code .hljs-string,
+.post-body pre code .hljs-attr,
+.post-body pre code .hljs-symbol {
+  color: #b7d99e;
+}
+
+.post-body pre code .hljs-number,
+.post-body pre code .hljs-literal,
+.post-body pre code .hljs-bullet {
+  color: #e6c07b;
+}
+
+.post-body pre code .hljs-title,
+.post-body pre code .hljs-title.function_,
+.post-body pre code .hljs-title.class_ {
+  color: #8ec5f0;
+}
+
+.post-body pre code .hljs-params,
+.post-body pre code .hljs-variable,
+.post-body pre code .hljs-template-variable {
+  color: #f3ebe1;
+}
+
+.post-body pre code .hljs-meta,
+.post-body pre code .hljs-doctag {
+  color: #c9b79d;
 }
 
 .post-body table {
