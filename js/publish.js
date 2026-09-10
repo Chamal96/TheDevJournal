@@ -123,9 +123,11 @@ function onAuth(callback) {
   return auth.onAuthStateChanged(async (user) => {
     if (user && !isAuthorUser(user)) {
       await auth.signOut();
+      if (window.Blog) Blog.setAuthorSession(false);
       callback(null, new Error(`Only ${authorEmail()} can publish.`));
       return;
     }
+    if (window.Blog) Blog.setAuthorSession(Boolean(user));
     callback(user || null);
   });
 }

@@ -91,17 +91,58 @@ function applySiteChrome(currentPage) {
       link.setAttribute("aria-current", "page");
     }
   });
+
+  if (window.BlogPublish && BlogPublish.isConfigured() && BlogPublish.onAuth) {
+    BlogPublish.onAuth((user) => {
+      setAuthorSession(Boolean(user));
+    });
+  }
+}
+
+const AUTHOR_SESSION_KEY = "tdj-author";
+let chromePage = "";
+
+function hasAuthorSession() {
+  try {
+    return localStorage.getItem(AUTHOR_SESSION_KEY) === "1";
+  } catch (error) {
+    return false;
+  }
+}
+
+function setAuthorSession(on) {
+  try {
+    if (on) localStorage.setItem(AUTHOR_SESSION_KEY, "1");
+    else localStorage.removeItem(AUTHOR_SESSION_KEY);
+  } catch (error) {
+    // Ignore private-mode storage failures.
+  }
+  mountWriteNav(chromePage);
 }
 
 function mountWriteNav(currentPage) {
+  chromePage = currentPage || chromePage;
   const nav = document.querySelector("nav.nav");
-  if (!nav || nav.querySelector('[data-nav="write"]')) return;
+  if (!nav) return;
+
+  const existing = nav.querySelector('[data-nav="write"]');
+  if (!hasAuthorSession()) {
+    if (existing) existing.remove();
+    return;
+  }
+
+  if (existing) {
+    if (chromePage === "write") existing.setAttribute("aria-current", "page");
+    else existing.removeAttribute("aria-current");
+    return;
+  }
+
   const link = document.createElement("a");
   link.href = "./write.html";
   link.setAttribute("data-nav", "write");
   link.textContent = "Write";
   nav.appendChild(link);
-  if (currentPage === "write") {
+  if (chromePage === "write") {
     link.setAttribute("aria-current", "page");
   }
 }
@@ -405,4 +446,5 @@ window.Blog = {
   mountReactions,
   coverUrl,
   coverMarkup,
+  setAuthorSession,
 };
