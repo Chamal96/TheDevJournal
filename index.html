@@ -58,10 +58,13 @@
               (post) => `
                 <li>
                   <a class="post-card" href="./post.html?slug=${encodeURIComponent(post.slug)}">
-                    <p class="post-meta">${Blog.formatDate(post.date)}</p>
-                    <h2>${post.title}</h2>
-                    <p>${post.summary}</p>
-                    <p class="post-engagement" data-engagement="${post.slug}">Loading reactions…</p>
+                    ${Blog.coverMarkup(post, "post-card-cover")}
+                    <div class="post-card-body">
+                      <p class="post-meta">${Blog.formatDate(post.date)}</p>
+                      <h2>${post.title}</h2>
+                      <p>${post.summary}</p>
+                      <p class="post-engagement" data-engagement="${post.slug}">Loading reactions…</p>
+                    </div>
                   </a>
                 </li>
               `

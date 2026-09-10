@@ -263,6 +263,19 @@ async function mountReactions(bar, slug) {
   return engagement;
 }
 
+function coverUrl(cover) {
+  const value = String(cover || "").trim();
+  if (!value || /^(javascript|data):/i.test(value)) return "";
+  if (/^https?:\/\//i.test(value)) return value;
+  return `./${value.replace(/^\.\/+/, "")}`;
+}
+
+function coverMarkup(post, className) {
+  const src = coverUrl(post && post.cover);
+  if (!src) return "";
+  return `<img class="${className}" src="${src}" alt="" />`;
+}
+
 window.Blog = {
   applySiteChrome,
   formatDate,
@@ -275,4 +288,6 @@ window.Blog = {
   recordView,
   reactionBarMarkup,
   mountReactions,
+  coverUrl,
+  coverMarkup,
 };

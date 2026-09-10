@@ -61,12 +61,23 @@
 
         root.innerHTML = `
           <article class="post">
-            <p class="post-meta" data-post-meta>${Blog.formatDate(post.date)}</p>
-            <h1 class="post-title">${post.title}</h1>
-            <div class="post-body">${Blog.renderMarkdown(markdown)}</div>
-            ${Blog.reactionBarMarkup()}
+            ${Blog.coverMarkup(post, "post-hero-cover")}
+            <div class="post-inner">
+              <p class="post-meta" data-post-meta>${Blog.formatDate(post.date)}</p>
+              <h1 class="post-title">${post.title}</h1>
+              <div class="post-body">${Blog.renderMarkdown(markdown)}</div>
+              ${Blog.reactionBarMarkup()}
+            </div>
           </article>
         `;
+
+        const coverSrc = Blog.coverUrl(post.cover);
+        if (coverSrc) {
+          const imageMeta = document.createElement("meta");
+          imageMeta.setAttribute("property", "og:image");
+          imageMeta.content = new URL(coverSrc, window.location.href).href;
+          document.head.appendChild(imageMeta);
+        }
 
         const views = await Blog.recordView(post.slug);
         const meta = root.querySelector("[data-post-meta]");

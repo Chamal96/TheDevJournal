@@ -41,6 +41,9 @@
           <label for="summary">Summary</label>
           <input id="summary" type="text" placeholder="One sentence for the homepage" />
 
+          <label for="cover">Cover image</label>
+          <input id="cover" type="text" placeholder="images/my-post.png" />
+
           <label for="body">Post</label>
           <textarea id="body" placeholder="Write in Markdown."></textarea>
 
@@ -69,6 +72,7 @@
       const titleInput = document.getElementById("title");
       const dateInput = document.getElementById("date");
       const summaryInput = document.getElementById("summary");
+      const coverInput = document.getElementById("cover");
       const bodyInput = document.getElementById("body");
       const preview = document.getElementById("preview");
       const status = document.getElementById("status");
@@ -82,7 +86,8 @@
         const summary = summaryInput.value.trim();
         const body = bodyInput.value;
         const slug = Blog.slugify(title);
-        return { title, date, summary, body, slug };
+        const cover = coverInput.value.trim() || (slug ? `images/${slug}.png` : "");
+        return { title, date, summary, body, slug, cover };
       }
 
       document.getElementById("preview-btn").addEventListener("click", () => {
@@ -111,10 +116,11 @@
   "slug": "${post.slug}",
   "title": ${JSON.stringify(post.title)},
   "date": "${post.date}",
-  "summary": ${JSON.stringify(post.summary || post.title)}
+  "summary": ${JSON.stringify(post.summary || post.title)},
+  "cover": ${JSON.stringify(post.cover)}
 }`;
         status.textContent =
-          "Saved a Markdown file. Put it in the posts folder, add the JSON below to posts/index.json, then publish the site.";
+          "Saved a Markdown file. Put it in the posts folder, add the cover image under images/, add the JSON below to posts/index.json, then publish the site.";
       });
     </script>
   </body>

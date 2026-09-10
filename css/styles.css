@@ -121,7 +121,8 @@ main {
 
 .post-card {
   display: block;
-  padding: 22px 24px;
+  padding: 0;
+  overflow: hidden;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 16px;
@@ -132,6 +133,19 @@ main {
 
 .post-card:hover {
   border-color: #c9b79d;
+}
+
+.post-card-cover,
+.post-hero-cover {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: var(--paper-deep);
+}
+
+.post-card-body {
+  padding: 22px 24px 24px;
 }
 
 .post-card h2 {
@@ -288,8 +302,13 @@ article.post {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 20px;
-  padding: clamp(24px, 5vw, 40px);
+  padding: 0;
+  overflow: hidden;
   box-shadow: var(--shadow);
+}
+
+.post-inner {
+  padding: clamp(24px, 5vw, 40px);
 }
 
 .post-body {
@@ -423,8 +442,8 @@ button.secondary,
     width: min(100% - 28px, 780px);
   }
 
-  .post-card,
-  article.post,
+  .post-card-body,
+  .post-inner,
   .page-card,
   .write-card {
     padding: 20px;
